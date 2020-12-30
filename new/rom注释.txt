@@ -1,0 +1,72 @@
+//logic type       
+               //op  rd, rs1, rs2, imm      result
+ABC06093       //ori $1, $0  0xABC          fffffabc
+AAA06113       //ori $2, $0  0xAAA          fffffaaa 
+F0F16193       //ori $3, $2  0xF0F          ffffffaf       RAW相关(相邻指令)
+0020F233       //and $4, $1, $2     AA8     fffffaa8       RAW相关(间隔一条\两条指令)
+0020E2B3       //or  $5, $1, $2     ABE     fffffabe
+0020C333       //xor $6, $1, $2             00000016
+               //nor $7, $1, $2
+               //andi $8, $1  0xA89
+               //xori  $9, $1 0xDD4
+               //nori  $10, $1 0x78A
+
+002095B3       //sll   $11, $1, $2          FFEAF000
+0020D633       //srl   $12, $1, $2          003FFFFE
+4020D6B3       //sra   $13, $1, $2          FFFFFFFE
+83D68737       //lui   $14,  0x83D68        83d68000
+
+//math type
+002087B3       //add   $15, $1, $2          fffff566
+83C08813       //addi  $16, $1 0x83C        fffff2f8
+401108B3       //sub   $17, $2, $1          ffffffee
+0020A933       //slt   $18, $1, $2(signed(fffffabc) < signed(fffffaaa)?)    00000000
+                                  //(-1348< -1366?)
+0020B9B3       //sltu  $19, $1, $2(unsigned(fffffabc) < unsigned(fffffaaa)?)  00000000
+12345A17       //auipc $20, 0x12345         1234503c
+
+
+//load store
+ABC06093       //ori $1, $0  0xABC
+001020A3       //sw $0, $1, 0x1     将寄存器1中的数据存入1号地址
+AAA06113       //ori $2, $0  0xAAA          fffffaaa
+70F06193       //ori $3, $0  0x70F          0000070F
+00102B03       //lw  $22, $0 0x1    将1号地址数据存入22号寄存器
+70F06193       //ori $3, $0  0x70F          0000070F
+70F06193       //ori $3, $0  0x70F          0000070F
+002020A3       //sw $0, $2, 0x1     将寄存器2中的数据存入1号地址
+000B6B93       //ori $23, $22, 0x0  LOAD-USE 暂停流水线一拍
+003010A3       //sh $0, $3, 0x1     存半字
+00101C03       //lh $24, $0, 0x1    加载半字
+//store cache/mem一致性问题???
+//同时更新cache和MEMERY中的数据
+
+//jump and branch
+ABC06093       //ori $1, $0  0xABC
+ABC06113       //ori $2, $0   0xABC
+00C001EF       //jal $3, 0x6           跳转到下三条指令
+ABC06093       //ori $1, $0  0xABC
+ABC06113       //ori $2, $0   0xABC
+0020F233       //and $4, $1, $2        AA8
+0020E2B3       //or  $5, $1, $2        ABE
+00208663       //beq $1, $2, 0x6       相等则跳转到下三条指令
+ABC06093       //ori $1, $0  0xABC
+ABC06113       //ori $2, $0   0xABC
+0020F233       //and $4, $1, $2        AA8
+0020E2B3       //or  $5, $1, $2        ABE
+0020F233       //and $4, $1, $2        AA8
+0020E2B3       //or  $5, $1, $2        ABE
+001020A3       //sw $0, $1, 0x1     将寄存器1中的数据存入1号地址
+00102B03       //lw  $22, $0 0x1    将1号地址数据存入22号寄存器
+01608663       //beq $1, $22, 0x6   LOAD-USE 暂停流水线一拍 相等则跳转到下三条指令
+ABC06093       //ori $1, $0  0xABC
+ABC06113       //ori $2, $0   0xABC
+0020F233       //and $4, $1, $2        AA8
+0020E2B3       //or  $5, $1, $2        ABE
+
+//csr
+ABC06093       //ori $1, $0  0xABC          x1=fffffabc
+AAA06113       //ori $2, $0  0xAAA          x2=fffffaaa 
+0010A1F3       //csrrs $3, $1, csr1         x3=0, csr1=fffffabc
+AAA06113       //ori $2, $0  0xAAA          x2 = fffffaaa
+0010E273       //csrrsi $4, csr1, 0x1       x4 = fffffabc, csr1 = fffffabd
